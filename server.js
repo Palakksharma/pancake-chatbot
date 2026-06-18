@@ -401,8 +401,13 @@ function isFuzzyWordMatch(word, target, maxDistance = 1) {
     return word === target;
   }
   const distance = getLevenshteinDistance(word, target);
-  // Allow 2 edits for words longer than 5 characters, else 1 edit
-  const allowed = target.length > 5 ? 2 : maxDistance;
+  // Allow 3 edits for words longer than 6 characters, 2 edits for words longer than 4 characters, else 1
+  let allowed = maxDistance;
+  if (target.length > 6) {
+    allowed = 3;
+  } else if (target.length > 4) {
+    allowed = 2;
+  }
   return distance <= allowed;
 }
 
@@ -923,7 +928,7 @@ app.post('/api/chat', async (req, res) => {
     const turnCount = totalTurns + 1;
     let newSummary = conv.rolling_summary;
 
-    if (turnCount > 0 && turnCount % 10 === 0) {
+    if (turnCount >= 10 && (turnCount % 10 === 0 || !conv.rolling_summary)) {
       stepLogs.push(`Conversation reached ${turnCount} turns. Generating rolling summary...`);
       try {
         const turnsList = [...dbHistory, { user_message: message, agent_response: responseText }];
@@ -963,7 +968,12 @@ Please generate a concise summary of this conversation. You must structure your 
         }
       } catch (sumError) {
         console.error('Failed to generate rolling summary:', sumError);
-        stepLogs.push(`Failed to generate rolling summary: ${sumError.message}`);
+        stepLogs.push(`⚠️ Failed to generate rolling summary: ${sumError.message || sumError}`);
+        // Fall back to a basic simulated summary so the dashboard isn't left empty
+        if (!newSummary) {
+          newSummary = `[USER PROFILE]: None (API rate-limited)\n[PERMANENT TRANSACTIONS]: None\n[CURRENT CONTEXT]: Chat in progress (${turnCount} turns). Gemini API rate-limited, summary fallback active.`;
+          stepLogs.push(`Generated fallback simulated summary.`);
+        }
       }
     }
 
