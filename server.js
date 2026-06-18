@@ -366,6 +366,96 @@ function estimateTokens(text) {
 
 
 
+// Helper: Levenshtein distance between two strings
+function getLevenshteinDistance(a, b) {
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+  
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1, // substitution
+          matrix[i][j - 1] + 1,     // insertion
+          matrix[i - 1][j] + 1      // deletion
+        );
+      }
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
+// Helper: Checks if a word is close to a target keyword
+function isFuzzyWordMatch(word, target, maxDistance = 1) {
+  if (target.length <= 3) {
+    return word === target;
+  }
+  const distance = getLevenshteinDistance(word, target);
+  // Allow 2 edits for words longer than 5 characters, else 1 edit
+  const allowed = target.length > 5 ? 2 : maxDistance;
+  return distance <= allowed;
+}
+
+// Helper: Checks if a message contains fuzzy matches for any keyword in a list
+function hasFuzzyKeyword(userMessage, keywordList) {
+  const words = userMessage.toLowerCase().split(/[^\w]+/);
+  return keywordList.some(keyword => {
+    if (userMessage.toLowerCase().includes(keyword)) return true;
+    return words.some(word => isFuzzyWordMatch(word, keyword));
+  });
+}
+
+// Helper: Finds fuzzy matched menu items in a text
+function findFuzzyMatchedItems(userMessage, menuItems) {
+  const commonWords = new Set([
+    'pancake', 'pancakes', 'and', 'with', 'served', 'for', 'kids', 'small', 
+    'portions', 'classic', 'style', 'singles', 'single', 'double', '2pcs', '1pc'
+  ]);
+  
+  const messageWords = userMessage.toLowerCase().split(/[^\w]+/).filter(w => w.length > 2);
+  const matched = [];
+  
+  for (const item of menuItems) {
+    const itemNameLower = item.name.toLowerCase();
+    
+    // Exact match check first
+    if (userMessage.toLowerCase().includes(itemNameLower)) {
+      matched.push({ item, score: 1.0 });
+      continue;
+    }
+    
+    const itemWords = itemNameLower.split(/[^\w]+/).filter(w => !commonWords.has(w) && w.length > 2);
+    if (itemWords.length === 0) continue;
+    
+    let matchedCount = 0;
+    for (const itemWord of itemWords) {
+      if (messageWords.some(msgWord => isFuzzyWordMatch(msgWord, itemWord))) {
+        matchedCount++;
+      }
+    }
+    
+    const score = matchedCount / itemWords.length;
+    // Threshold: at least half of distinguishing words match, or at least 1 if only 1 exists
+    if (score >= 0.5 || (itemWords.length === 1 && matchedCount === 1)) {
+      matched.push({ item, score });
+    }
+  }
+  
+  // Sort by score descending, then by name length descending
+  matched.sort((a, b) => b.score - a.score || b.item.name.length - a.item.name.length);
+  return matched.map(m => m.item);
+}
+
 // ----------------------------------------------------
 // Smart Local Simulator (Runs when API Key is missing)
 // ----------------------------------------------------
@@ -384,9 +474,9 @@ async function runSimulator(userMessage, history, currentSummary) {
   const timingKeywords = ['time', 'open', 'close', 'hour', 'schedule', 'address', 'location', 'where', 'phone', 'call', 'contact', 'ludhiana', 'map'];
   const orderKeywords = ['order', 'buy', 'purchase', 'pay', 'checkout', 'bill', 'total', 'cost of my order'];
 
-  const triggerMenu = menuKeywords.some(keyword => lowerMsg.includes(keyword));
-  const triggerTiming = timingKeywords.some(keyword => lowerMsg.includes(keyword));
-  const triggerOrder = orderKeywords.some(keyword => lowerMsg.includes(keyword));
+  const triggerMenu = hasFuzzyKeyword(lowerMsg, menuKeywords);
+  const triggerTiming = hasFuzzyKeyword(lowerMsg, timingKeywords);
+  const triggerOrder = hasFuzzyKeyword(lowerMsg, orderKeywords);
 
   if (triggerOrder) {
     toolCalled = "getMenu";
@@ -403,26 +493,18 @@ async function runSimulator(userMessage, history, currentSummary) {
       combinedText = recentUserMessages.join(" ") + " " + lowerMsg;
     }
 
-    // Parse order items from combined messages
+    // Parse order items from combined messages using fuzzy matching
     let orderList = [];
     let outOfStockList = [];
     let orderTotal = 0;
 
-    // We sort items by name length descending to match longer names first
-    const sortedMenuItems = [...toolData].sort((a, b) => b.name.length - a.name.length);
-
-    let tempText = combinedText;
-    for (const item of sortedMenuItems) {
-      const itemNameLower = item.name.toLowerCase();
-      if (tempText.includes(itemNameLower)) {
-        if (item.is_available === 0) {
-          outOfStockList.push(item);
-        } else {
-          orderList.push(item);
-          orderTotal += item.price;
-        }
-        // Remove the matched item from tempText to avoid duplicate matching
-        tempText = tempText.replace(new RegExp(itemNameLower, 'g'), '');
+    const matchedItems = findFuzzyMatchedItems(combinedText, toolData);
+    for (const item of matchedItems) {
+      if (item.is_available === 0) {
+        outOfStockList.push(item);
+      } else {
+        orderList.push(item);
+        orderTotal += item.price;
       }
     }
 
@@ -471,14 +553,9 @@ async function runSimulator(userMessage, history, currentSummary) {
     steps.push(`[Simulator] Query matches menu/pancake context. Simulating tool call: getMenu()`);
     steps.push(`[Simulator] getMenu() returned database containing ${toolData.length} items.`);
 
-    // Check if the user is asking for a specific item name
-    let matchedItem = null;
-    for (const item of toolData) {
-      if (lowerMsg.includes(item.name.toLowerCase())) {
-        matchedItem = item;
-        break;
-      }
-    }
+    // Check if the user is asking for a specific item name using fuzzy matching
+    const matchedItems = findFuzzyMatchedItems(lowerMsg, toolData);
+    const matchedItem = matchedItems.length > 0 ? matchedItems[0] : null;
 
     if (matchedItem) {
       if (matchedItem.is_available === 0) {
