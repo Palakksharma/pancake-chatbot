@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Local Environment Variables & Secrets
+.env
+.env.local
+
+# Databases
+database.sqlite
+
+# Temp Files & Locks
+.browser_opened
+.DS_Store
+Thumbs.db

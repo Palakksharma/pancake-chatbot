@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uncle Peter's Pancakes - Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
+    rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Desktop Admin Styles overrides/extensions */
+    body {
+      padding: 24px;
+    }
+
+    .admin-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+      flex-grow: 1;
+      align-items: stretch;
+    }
+
+    /* Left Navigation Sidebar */
+    .admin-sidebar {
+      background: rgba(30, 41, 59, 0.4);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .sidebar-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding-left: 12px;
+      margin-bottom: 10px;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav-item button {
+      width: 100%;
+      background: none;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
+      padding: 12px 16px;
+      border-radius: 10px;
+      text-align: left;
+      font-family: var(--font-sans);
+      font-size: 14.5px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .nav-item button:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active button {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+      color: var(--text-primary);
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.1);
+    }
+
+    .nav-item.active button i {
+      color: var(--accent-cyan);
+    }
+
+    /* Content Panels */
+    .admin-panel {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+
+    .admin-panel.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Metrics Row */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .metric-card {
+      background: rgba(30, 41, 59, 0.3);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-header i {
+      font-size: 16px;
+    }
+
+    .metric-number {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .metric-footer {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* Grid details */
+    .dashboard-two-col {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 20px;
+    }
+
+    /* Session Monitor Two-Column Panel */
+    .monitor-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      height: calc(100vh - 170px);
+    }
+
+    .session-list-box {
+      background: rgba(30, 41, 59, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .box-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(15, 23, 42, 0.2);
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .session-scroll {
+      flex-grow: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .session-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .session-item:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .session-item.active {
+      background: rgba(139, 92, 246, 0.1);
+      border-left: 4px solid var(--accent-purple);
+    }
+
+    .session-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .session-id-lbl {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .session-token-badge {
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .session-item-date {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* Chat Viewer Pane */
+    .chat-view-pane {
+      background: rgba(30, 41, 59, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chat-view-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(15, 23, 42, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-header-info h4 {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .chat-header-info p {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .chat-view-body {
+      flex-grow: 1;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    /* Clean Admin Message Bubbles (no WA frame needed, but clear distinction) */
+    .admin-msg-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 80%;
+    }
+
+    .admin-msg-row.incoming {
+      align-self: flex-start;
+    }
+
+    .admin-msg-row.outgoing {
+      align-self: flex-end;
+    }
+
+    .admin-msg-bubble {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .admin-msg-row.incoming .admin-msg-bubble {
+      background: #1e293b;
+      color: var(--text-primary);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-top-left-radius: 2px;
+    }
+
+    .admin-msg-row.outgoing .admin-msg-bubble {
+      background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+      color: white;
+      border-top-right-radius: 2px;
+    }
+
+    .admin-msg-time {
+      font-size: 10px;
+      color: var(--text-secondary);
+      padding: 0 4px;
+    }
+
+    .admin-msg-row.outgoing .admin-msg-time {
+      text-align: right;
+    }
+
+    /* Rolling Summary Display Header */
+    .summary-alert-card {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(15, 23, 42, 0.3) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .summary-alert-card h5 {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fbbf24;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .summary-alert-card p {
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--text-primary);
+      font-style: italic;
+    }
+
+    /* Empty State */
+    .admin-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      color: var(--text-secondary);
+      height: 100%;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .admin-empty-state i {
+      font-size: 48px;
+      color: rgba(255, 255, 255, 0.06);
+    }
+
+    /* Menu Database Styling */
+    .table-container {
+      background: rgba(30, 41, 59, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .table-search-bar {
+      padding: 16px;
+      background: rgba(15, 23, 42, 0.2);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      gap: 12px;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      flex-grow: 1;
+    }
+
+    .search-input-wrapper i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+    }
+
+    .search-input-wrapper input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px 10px 36px;
+      color: var(--text-primary);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .search-input-wrapper input:focus {
+      border-color: var(--accent-cyan);
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .admin-table th {
+      background: rgba(15, 23, 42, 0.4);
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-color);
+      text-transform: uppercase;
+      font-size: 11.5px;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-table td {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .admin-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .admin-table tr:hover td {
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    .category-badge {
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11.5px;
+      font-weight: 500;
+      display: inline-block;
+    }
+
+    .price-value {
+      font-weight: 600;
+      color: #34d399;
+    }
+
+    .status-btn {
+      border: none;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .status-btn:hover {
+      filter: brightness(1.2);
+      transform: scale(1.03);
+    }
+
+    .status-in-stock {
+      background: rgba(52, 211, 153, 0.12);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.2);
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11.5px;
+      font-weight: 500;
+      display: inline-block;
+    }
+
+    .status-out-of-stock {
+      background: rgba(244, 63, 94, 0.12);
+      color: #f43f5e;
+      border: 1px solid rgba(244, 63, 94, 0.2);
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11.5px;
+      font-weight: 500;
+      display: inline-block;
+    }
+
+    /* Live Log Card full-page */
+    .logs-panel-body {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      height: calc(100vh - 170px);
+    }
+
+    .logs-panel-body .terminal-body {
+      height: 100% !important;
+      flex-grow: 1;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 12px 8px;
+        height: auto;
+      }
+
+      .admin-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .admin-sidebar {
+        padding: 12px;
+        flex-direction: row;
+        overflow-x: auto;
+        white-space: nowrap;
+        gap: 12px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(15, 23, 42, 0.9);
+      }
+
+      .sidebar-title {
+        display: none;
+      }
+
+      .nav-list {
+        flex-direction: row;
+        width: 100%;
+        gap: 8px;
+      }
+
+      .nav-item button {
+        padding: 8px 12px;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .dashboard-two-col {
+        grid-template-columns: 1fr;
+      }
+
+      .monitor-layout {
+        grid-template-columns: 1fr;
+        height: calc(100vh - 150px);
+        position: relative;
+      }
+
+      /* Toggle between chat list and transcript on mobile */
+      .monitor-layout .session-list-box {
+        display: flex;
+        width: 100%;
+      }
+
+      .monitor-layout .chat-view-pane {
+        display: none;
+        width: 100%;
+      }
+
+      .monitor-layout.chat-active .session-list-box {
+        display: none;
+      }
+
+      .monitor-layout.chat-active .chat-view-pane {
+        display: flex;
+      }
+
+      .back-sessions-btn {
+        display: flex !important;
+      }
+
+      .table-container {
+        background: none;
+        border: none;
+        box-shadow: none;
+      }
+
+      .admin-table {
+        display: block;
+        width: 100%;
+        min-width: 0;
+      }
+
+      .admin-table thead {
+        display: none;
+      }
+
+      .admin-table tbody {
+        display: block;
+        width: 100%;
+      }
+
+      .admin-table tr {
+        display: block;
+        width: 100%;
+        background: rgba(30, 41, 59, 0.4);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      .admin-table tr:hover td {
+        background: none;
+      }
+
+      .admin-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        text-align: right;
+      }
+
+      .admin-table td:last-child {
+        border-bottom: none;
+      }
+
+      .admin-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        float: left;
+      }
+
+      /* Make description stack full width at bottom of card */
+      .admin-table td[data-label="Description"] {
+        display: block;
+        text-align: left;
+        padding-top: 12px;
+      }
+
+      .admin-table td[data-label="Description"]::before {
+        display: block;
+        margin-bottom: 6px;
+        float: none;
+      }
+
+      /* Price Edit UI Mobile Override alignment */
+      .price-edit-container {
+        justify-content: flex-end;
+      }
+
+
+      /* Price Edit UI styling */
+      .price-edit-container {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .price-edit-btn {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        font-size: 11px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        opacity: 0.3;
+      }
+
+      tr:hover .price-edit-btn {
+        opacity: 1;
+      }
+
+      .price-edit-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--accent-cyan);
+      }
+
+      .price-input-wrapper {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .price-edit-input {
+        width: 65px;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: #34d399;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 13.5px;
+        padding: 3px 6px;
+        outline: none;
+      }
+
+      .price-edit-input:focus {
+        border-color: var(--accent-cyan);
+      }
+
+      .price-save-btn,
+      .price-cancel-btn {
+        border: none;
+        cursor: pointer;
+        border-radius: 6px;
+        padding: 4px 6px;
+        font-size: 11px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+
+      .price-save-btn {
+        background: rgba(52, 211, 153, 0.12);
+        color: #34d399;
+        border: 1px solid rgba(52, 211, 153, 0.2);
+      }
+
+      .price-save-btn:hover {
+        background: rgba(52, 211, 153, 0.2);
+      }
+
+      .price-cancel-btn {
+        background: rgba(244, 63, 94, 0.12);
+        color: #f43f5e;
+        border: 1px solid rgba(244, 63, 94, 0.2);
+      }
+
+      .price-cancel-btn:hover {
+        background: rgba(244, 63, 94, 0.2);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Main App Wrapper -->
+  <div class="app-container">
+
+    <!-- Header/Branding Area -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="logo-icon"><i class="fa-solid fa-gauge-high"></i>🥞</div>
+        <div>
+          <h1>Uncle Peter's Pancake Shop</h1>
+          <p class="subtitle">Admin Dashboard & Live Token Auditor Portal</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="mode-badge simulator-badge" id="backendModeBadge">Checking Backend...</span>
+        <a href="customer.html" target="_blank" class="btn btn-danger" id="openUserChatBtn"
+          style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border-color: rgba(56, 189, 248, 0.2);">
+          <i class="fa-solid fa-comment-dots"></i> Open User Chat
+        </a>
+      </div>
+    </header>
+
+    <div class="admin-layout">
+
+      <!-- LEFT SIDEBAR: Navigation Menu -->
+      <aside class="admin-sidebar">
+        <div class="sidebar-title">Management</div>
+        <ul class="nav-list">
+          <li class="nav-item active" data-tab="dashboard">
+            <button><i class="fa-solid fa-chart-line"></i> Overview Stats</button>
+          </li>
+          <li class="nav-item" data-tab="chats">
+            <button><i class="fa-solid fa-comments"></i> Chat Auditor</button>
+          </li>
+          <li class="nav-item" data-tab="menu">
+            <button><i class="fa-solid fa-utensils"></i> Menu Database</button>
+          </li>
+          <li class="nav-item" data-tab="logs">
+            <button><i class="fa-solid fa-terminal"></i> Live Server Logs</button>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- RIGHT PANEL: Tab Contents -->
+      <main class="admin-content">
+
+        <!-- Tab 1: Overview Dashboard -->
+        <section class="admin-panel active" id="panel-dashboard">
+
+          <!-- Metrics Row -->
+          <div class="metrics-grid">
+
+            <div class="metric-card">
+              <div class="metric-header">
+                <span>Total Conversations</span>
+                <i class="fa-solid fa-comments" style="color: var(--accent-blue);"></i>
+              </div>
+              <div class="metric-number" id="cardTotalChats">0</div>
+              <div class="metric-footer">Across all customer cookies</div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-header">
+                <span>Total Tokens Spent</span>
+                <i class="fa-solid fa-calculator" style="color: var(--accent-purple);"></i>
+              </div>
+              <div class="metric-number" id="cardTotalTokens">0</div>
+              <div class="metric-footer">Accumulated LLM usage</div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-header">
+                <span>Unique Active Users</span>
+                <i class="fa-solid fa-users" style="color: var(--accent-rose);"></i>
+              </div>
+              <div class="metric-number" id="cardTotalUsers">0</div>
+              <div class="metric-footer">Relational SQLite users</div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-header">
+                <span>Avg. Tokens / Session</span>
+                <i class="fa-solid fa-chart-bar" style="color: var(--accent-cyan);"></i>
+              </div>
+              <div class="metric-number" id="cardAvgTokens">0</div>
+              <div class="metric-footer">Calculated average usage</div>
+            </div>
+
+          </div>
+
+          <div class="dashboard-two-col">
+
+            <!-- Cumulative Token breakdown card -->
+            <div class="dash-card token-breakdown-card" style="grid-column: span 1;">
+              <h3><i class="fa-solid fa-magnifying-glass-chart"></i> Dynamic Token Distribution</h3>
+              <div class="breakdown-grid">
+
+                <div class="breakdown-stat">
+                  <div class="stat-meta">
+                    <span class="stat-title">System Prompt Tokens</span>
+                    <span class="stat-number" id="breakdownSys">0</span>
+                  </div>
+                  <div class="stat-bar-bg">
+                    <div class="stat-bar-fill bar-system" id="barSys" style="width: 0%"></div>
+                  </div>
+                </div>
+
+                <div class="breakdown-stat">
+                  <div class="stat-meta">
+                    <span class="stat-title">User Msg Input Tokens</span>
+                    <span class="stat-number" id="breakdownUsr">0</span>
+                  </div>
+                  <div class="stat-bar-bg">
+                    <div class="stat-bar-fill bar-user" id="barUsr" style="width: 0%"></div>
+                  </div>
+                </div>
+
+                <div class="breakdown-stat">
+                  <div class="stat-meta">
+                    <span class="stat-title">Tool Call Tokens</span>
+                    <span class="stat-number" id="breakdownTools">0</span>
+                  </div>
+                  <div class="stat-bar-bg">
+                    <div class="stat-bar-fill bar-tools" id="barTools" style="width: 0%"></div>
+                  </div>
+                </div>
+
+                <div class="breakdown-stat">
+                  <div class="stat-meta">
+                    <span class="stat-title">Response Tokens</span>
+                    <span class="stat-number" id="breakdownAgent">0</span>
+                  </div>
+                  <div class="stat-bar-bg">
+                    <div class="stat-bar-fill bar-agent" id="barAgent" style="width: 0%"></div>
+                  </div>
+                </div>
+
+                <div class="breakdown-stat">
+                  <div class="stat-meta">
+                    <span class="stat-title">Rolling Summary Tokens</span>
+                    <span class="stat-number" id="breakdownSummary">0</span>
+                  </div>
+                  <div class="stat-bar-bg">
+                    <div class="stat-bar-fill bar-summary" id="barSummary" style="width: 0%"></div>
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="breakdown-total">
+                <span>Total Accumulated Tokens:</span>
+                <strong id="breakdownTotal">0</strong>
+              </div>
+            </div>
+
+            <!-- Quick Recent Chats List -->
+            <div class="dash-card">
+              <h3><i class="fa-solid fa-clock-rotate-left"></i> Recent Activity Log</h3>
+              <div class="metrics-list" id="dashboardRecentChats" style="gap: 12px;">
+                <!-- Dynamically loaded quick list -->
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- Tab 2: Chat Monitor & Auditor -->
+        <section class="admin-panel" id="panel-chats">
+          <div class="monitor-layout">
+
+            <!-- Left Panel: Session Sidebar Listing -->
+            <div class="session-list-box">
+              <div class="box-header">
+                <span>Session Log History</span>
+                <span class="session-token-badge" id="sessionCountBadge">0 sessions</span>
+              </div>
+              <div class="session-scroll" id="adminSessionList">
+                <!-- Dynamically loaded via adminSessionList JS -->
+              </div>
+            </div>
+
+            <!-- Right Panel: Message auditor pane -->
+            <div class="chat-view-pane" id="chatViewPane">
+              <div class="admin-empty-state" id="chatPaneEmptyState">
+                <i class="fa-solid fa-magnifying-glass-chart"></i>
+                <p>Select a customer session from the left panel to audit the chat history and view token allocations.
+                </p>
+              </div>
+
+              <div class="chat-view-container" id="chatViewContainer"
+                style="display: none; flex-direction: column; height: 100%;">
+
+                <!-- Auditor Chat Header -->
+                <div class="chat-view-header"
+                  style="display: flex; align-items: center; justify-content: space-between;">
+                  <div style="display: flex; align-items: center;">
+                    <button class="back-sessions-btn" id="backSessionsBtn" onclick="closeChatView()"
+                      style="display: none; margin-right: 12px; align-items: center; gap: 6px; background: none; border: none; color: var(--accent-cyan); font-size: 15px; font-weight: 600; cursor: pointer; outline: none;">
+                      <i class="fa-solid fa-arrow-left"></i> Back
+                    </button>
+                    <div class="chat-header-info">
+                      <h4 id="auditSessionHeaderId">Session Details</h4>
+                      <p id="auditSessionHeaderMeta">Started: Loading...</p>
+                    </div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <a href="customer.html" target="_blank" id="auditOpenUserChatLink" style="display: none; font-size: 12px; color: var(--accent-cyan); text-decoration: none; border: 1px solid rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.08); padding: 6px 12px; border-radius: 8px; align-items: center; gap: 6px; transition: all 0.2s; font-weight: 600; font-family: var(--font-sans);">
+                      <i class="fa-solid fa-comment-dots"></i> Open User Chat
+                    </a>
+                    <span class="session-token-badge" style="background: rgba(139, 92, 246, 0.2); color: #a78bfa;"
+                      id="auditSessionTokenBadge">0 tokens</span>
+                  </div>
+                </div>
+
+                <!-- Chat Transcript Body -->
+                <div class="chat-view-body" id="chatViewBody">
+
+                  <!-- Rolling Summary Box (Injected at the top) -->
+                  <div class="summary-alert-card" id="auditSummaryCard" style="display: none;">
+                    <h5><i class="fa-solid fa-bookmark"></i> Injected Rolling Summary</h5>
+                    <p id="auditSummaryText">No summary created yet.</p>
+                  </div>
+
+                  <!-- Message thread goes here -->
+                  <div id="chatMessageThread" style="display: flex; flex-direction: column; gap: 16px;">
+                    <!-- Bubbles will go here -->
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Tab 3: Menu Database -->
+        <section class="admin-panel" id="panel-menu">
+          <div class="table-container">
+            <div class="table-search-bar">
+              <div class="search-input-wrapper">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="menuSearchInput"
+                  placeholder="Search menu items by category, name, or description...">
+              </div>
+            </div>
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th style="width: 60px;">ID</th>
+                  <th>Item Name</th>
+                  <th style="width: 180px;">Category</th>
+                  <th style="width: 100px;">Price</th>
+                  <th style="width: 130px;">Status</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody id="menuTableBody">
+                <!-- Dynamically populated table items -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Tab 4: Live Server Execution Logs -->
+        <section class="admin-panel" id="panel-logs">
+          <div class="logs-panel-body">
+            <div class="dash-card terminal-card" style="grid-column: span 1; height: 100%; border-radius: 16px;">
+              <div class="terminal-header">
+                <span class="term-dot dot-red"></span>
+                <span class="term-dot dot-yellow"></span>
+                <span class="term-dot dot-green"></span>
+                <span class="terminal-title">Active Server Logs (Session Execution Trace)</span>
+                <button id="clearLogsBtn" class="clear-logs-btn"><i class="fa-solid fa-trash-can"></i> Clear
+                  Screen</button>
+              </div>
+              <div class="terminal-body" id="terminalConsole">
+                <div class="terminal-line system-line">[Admin Console Initialized] Listening for server logs...</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+
+</html>

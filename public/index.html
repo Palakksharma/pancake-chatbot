@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uncle Peter's Pancakes Chatbot & Token Auditor</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Google Fonts: Inter and Outfits for modern look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <!-- FontAwesome for WhatsApp/UI Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Main App Wrapper -->
+  <div class="app-container">
+    
+    <!-- Header/Branding Area -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="logo-icon"><i class="fa-solid fa-pancakes"></i>🥞</div>
+        <div>
+          <h1>Uncle Peter's Pancake Shop</h1>
+          <p class="subtitle">Ludhiana Support Chatbot & Real-Time Token Auditor</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="mode-badge simulator-badge" id="backendModeBadge">Checking Backend...</span>
+        <button id="resetSessionBtn" class="btn btn-danger"><i class="fa-solid fa-rotate-left"></i> Reset Session</button>
+      </div>
+    </header>
+
+    <div class="app-workspace">
+      
+      <!-- LEFT COLUMN: WhatsApp Phone Viewport -->
+      <section class="viewport-section">
+        <div class="viewport-title">
+          <i class="fa-solid fa-mobile-screen-button"></i> Mobile Device Viewport
+        </div>
+        
+        <div class="phone-mockup">
+          <div class="phone-speaker"></div>
+          <div class="phone-screen">
+            
+            <!-- WhatsApp Header -->
+            <div class="wa-header">
+              <div class="wa-left">
+                <i class="fa-solid fa-arrow-left wa-back"></i>
+                <div class="wa-avatar-container">
+                  <div class="wa-avatar">🥞</div>
+                  <span class="wa-status-dot"></span>
+                </div>
+                <div class="wa-chat-info">
+                  <span class="wa-name">Uncle Peter's Pancakes</span>
+                  <span class="wa-status">Online</span>
+                </div>
+              </div>
+              <div class="wa-actions">
+                <i class="fa-solid fa-video"></i>
+                <i class="fa-solid fa-phone"></i>
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+              </div>
+            </div>
+
+            <!-- WhatsApp Chat Background / Message Area -->
+            <div class="wa-chat-body" id="chatBody">
+              
+              <!-- Greeting system bubble -->
+              <div class="wa-system-date">TODAY</div>
+              
+              <div class="wa-message wa-incoming">
+                <div class="wa-message-text">
+                  Hello! Welcome to <b>Uncle Peter's Pancakes</b> Ludhiana. 🥞✨ How can I help you today?
+                  <br><br>
+                  You can ask me about our pancake menu, prices, opening hours, or address!
+                </div>
+                <div class="wa-message-time">12:00 PM <span class="wa-ticks">✓✓</span></div>
+              </div>
+              
+              <!-- Dynamic bubbles go here -->
+
+              <!-- Typing indicator (hidden by default) -->
+              <div class="wa-message wa-incoming typing-indicator-bubble" id="typingBubble" style="display: none;">
+                <div class="typing-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- WhatsApp Input Footer -->
+            <div class="wa-footer">
+              <div class="wa-input-container">
+                <i class="fa-regular fa-face-smile wa-icon"></i>
+                <input type="text" id="userInput" placeholder="Type a message" autocomplete="off">
+                <i class="fa-solid fa-paperclip wa-icon wa-attachment"></i>
+                <i class="fa-solid fa-camera wa-icon"></i>
+              </div>
+              <button class="wa-send-btn" id="sendBtn">
+                <i class="fa-solid fa-microphone" id="sendIcon"></i>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN: Token Auditor & Developer Dashboard -->
+      <section class="dashboard-section">
+        <div class="viewport-title">
+          <i class="fa-solid fa-gauge-high"></i> Developer Console & Token Auditor
+        </div>
+
+        <div class="dashboard-grid">
+          
+          <!-- Card 1: Session Details -->
+          <div class="dash-card">
+            <h3><i class="fa-solid fa-fingerprint"></i> Session & Cookie Metrics</h3>
+            <div class="metrics-list">
+              <div class="metric-row">
+                <span class="m-label">Session Cookie ID:</span>
+                <span class="m-value id-value" id="sessionIdVal">Loading...</span>
+              </div>
+              <div class="metric-row">
+                <span class="m-label">Session Started:</span>
+                <span class="m-value" id="sessionStartVal">Loading...</span>
+              </div>
+              <div class="metric-row">
+                <span class="m-label">Last Activity:</span>
+                <span class="m-value" id="sessionActiveVal">Loading...</span>
+              </div>
+              <div class="metric-row">
+                <span class="m-label">Database Status:</span>
+                <span class="m-value status-online"><i class="fa-solid fa-circle-check"></i> SQLite Active</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Cumulative Token Counters -->
+          <div class="dash-card cumulative-card">
+            <h3><i class="fa-solid fa-calculator"></i> Session Cumulative Tokens</h3>
+            <div class="cumulative-big-display">
+              <div class="cumulative-number" id="cumulativeTokenCount">0</div>
+              <div class="cumulative-label">Total Tokens Spent</div>
+            </div>
+            <div class="cumulative-bars">
+              <div class="bar-header">
+                <span>Usage relative to Gemini 2.5 Flash context limit</span>
+                <span>0.01%</span>
+              </div>
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="cumulativeProgressBar" style="width: 0.1%"></div>
+              </div>
+            </div>
+          </div>
+
+
+
+          <!-- Card 5: Multi-Session Auditor -->
+          <div class="dash-card auditor-card">
+            <h3><i class="fa-solid fa-users-viewfinder"></i> Multi-Session Auditor (30-day History)</h3>
+            <div class="auditor-controls">
+              <div class="control-row">
+                <label for="auditorUserSelect"><i class="fa-solid fa-user-tag"></i> Select User:</label>
+                <select id="auditorUserSelect" class="form-select">
+                  <option value="">-- Choose User ID --</option>
+                </select>
+              </div>
+              <div class="control-row">
+                <label for="auditorConvSelect"><i class="fa-solid fa-comments"></i> Select Session:</label>
+                <select id="auditorConvSelect" class="form-select" disabled>
+                  <option value="">-- Choose Chat Session --</option>
+                </select>
+              </div>
+            </div>
+            <div class="auditor-history-area">
+              <div class="auditor-empty-state" id="auditorEmptyState">
+                Select a User and Conversation session to inspect previous chat history and turn-by-turn token breakdowns.
+              </div>
+              <div class="auditor-history-list" id="auditorHistoryList" style="display: none;">
+                <!-- Dynamically loaded history turns go here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 4: Terminal System Console Logs -->
+          <div class="dash-card terminal-card">
+            <div class="terminal-header">
+              <span class="term-dot dot-red"></span>
+              <span class="term-dot dot-yellow"></span>
+              <span class="term-dot dot-green"></span>
+              <span class="terminal-title">Active Server Execution Logs</span>
+              <button id="clearLogsBtn" class="clear-logs-btn"><i class="fa-solid fa-trash-can"></i> Clear Terminal</button>
+            </div>
+            <div class="terminal-body" id="terminalConsole">
+              <div class="terminal-line system-line">[Console Initialized] Listening for user messages...</div>
+              <div class="terminal-line info-line">[Info] System Instruction token metrics loaded by default (85 tokens).</div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
