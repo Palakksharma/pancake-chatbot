@@ -366,92 +366,46 @@ function estimateTokens(text) {
 
 
 
-// Helper: Levenshtein distance between two strings
-function getLevenshteinDistance(a, b) {
-  if (a.length === 0) return b.length;
-  if (b.length === 0) return a.length;
-  
-  const matrix = [];
-  for (let i = 0; i <= b.length; i++) {
-    matrix[i] = [i];
-  }
-  for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j;
-  }
-  
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1, // substitution
-          matrix[i][j - 1] + 1,     // insertion
-          matrix[i - 1][j] + 1      // deletion
-        );
-      }
-    }
-  }
-  return matrix[b.length][a.length];
-}
-
-// Helper: Checks if a word is close to a target keyword
-function isFuzzyWordMatch(word, target, maxDistance = 1) {
-  if (target.length <= 3) {
-    return word === target;
-  }
-  const distance = getLevenshteinDistance(word, target);
-  // Allow 3 edits for words longer than 6 characters, 2 edits for words longer than 4 characters, else 1
-  let allowed = maxDistance;
-  if (target.length > 6) {
-    allowed = 3;
-  } else if (target.length > 4) {
-    allowed = 2;
-  }
-  return distance <= allowed;
-}
-
-// Helper: Checks if a message contains fuzzy matches for any keyword in a list
+// Helper: Checks if a message contains any keyword in a list (exact or word boundary match)
 function hasFuzzyKeyword(userMessage, keywordList) {
-  const words = userMessage.toLowerCase().split(/[^\w]+/);
+  const words = new Set(userMessage.toLowerCase().split(/[^\w]+/));
   return keywordList.some(keyword => {
-    if (userMessage.toLowerCase().includes(keyword)) return true;
-    return words.some(word => isFuzzyWordMatch(word, keyword));
+    return userMessage.toLowerCase().includes(keyword) || words.has(keyword);
   });
 }
 
-// Helper: Finds fuzzy matched menu items in a text
+// Helper: Finds matched menu items in a text (exact word overlap matching)
 function findFuzzyMatchedItems(userMessage, menuItems) {
   const commonWords = new Set([
     'pancake', 'pancakes', 'and', 'with', 'served', 'for', 'kids', 'small', 
     'portions', 'classic', 'style', 'singles', 'single', 'double', '2pcs', '1pc'
   ]);
   
-  const messageWords = userMessage.toLowerCase().split(/[^\w]+/).filter(w => w.length > 2);
+  const messageWords = new Set(userMessage.toLowerCase().split(/[^\w]+/).filter(w => w.length > 2));
   const matched = [];
   
   for (const item of menuItems) {
     const itemNameLower = item.name.toLowerCase();
     
-    // Exact match check first
+    // Exact full item name match check first
     if (userMessage.toLowerCase().includes(itemNameLower)) {
-      matched.push({ item, score: 1.0 });
+      matched.push({ item, score: 10.0 });
       continue;
     }
     
     const itemWords = itemNameLower.split(/[^\w]+/).filter(w => !commonWords.has(w) && w.length > 2);
     if (itemWords.length === 0) continue;
     
-    let matchedCount = 0;
+    let matchCount = 0;
     for (const itemWord of itemWords) {
-      if (messageWords.some(msgWord => isFuzzyWordMatch(msgWord, itemWord))) {
-        matchedCount++;
+      if (messageWords.has(itemWord)) {
+        matchCount++;
       }
     }
     
-    const score = matchedCount / itemWords.length;
-    // Threshold: at least half of distinguishing words match, or at least 1 if only 1 exists
-    if (score >= 0.5 || (itemWords.length === 1 && matchedCount === 1)) {
+    const score = matchCount / itemWords.length;
+    // Require at least one word match and score >= 0.35
+    if (matchCount > 0 && score >= 0.35) {
       matched.push({ item, score });
     }
   }
