@@ -433,7 +433,8 @@ async function runSimulator(userMessage, history, currentSummary) {
     'menu', 'pancake', 'pancakes', 'price', 'cost', 'rate', 'eat', 'dish', 'food', 'sweet', 'chocolate', 
     'biscoff', 'beverage', 'drink', 'serve', 'serving', 'serves', 'have', 'has', 'fries', 'side', 'sides', 
     'crepe', 'crepes', 'coffee', 'tea', 'soda', 'mojito', 'shake', 'shakes', 'sandwich', 'sandwiches', 
-    'omelette', 'omelettes', 'french', 'toast', 'toasts', 'get', 'list', 'show'
+    'omelette', 'omelettes', 'french', 'toast', 'toasts', 'get', 'list', 'show',
+    'gluten', 'glutenfree', 'celiac', 'diabetic', 'diabetes', 'sugar', 'sugarfree', 'vegetarian', 'veg', 'eggless', 'eggfree'
   ];
   const timingKeywords = ['time', 'open', 'close', 'hour', 'schedule', 'address', 'location', 'where', 'phone', 'call', 'contact', 'ludhiana', 'map'];
   const orderKeywords = ['order', 'buy', 'purchase', 'pay', 'checkout', 'bill', 'total', 'cost of my order'];
@@ -517,38 +518,47 @@ async function runSimulator(userMessage, history, currentSummary) {
     steps.push(`[Simulator] Query matches menu/pancake context. Simulating tool call: getMenu()`);
     steps.push(`[Simulator] getMenu() returned database containing ${toolData.length} items.`);
 
-    // Check if the user is asking for a specific item name using fuzzy matching
-    const matchedItems = findFuzzyMatchedItems(lowerMsg, toolData);
-    const matchedItem = matchedItems.length > 0 ? matchedItems[0] : null;
-
-    if (matchedItem) {
-      if (matchedItem.is_available === 0) {
-        responseText = `I'm sorry, but our *${matchedItem.name}* 🥞 is currently out of stock today! Can I recommend trying a similar alternative from our **${matchedItem.category}** selection?`;
-      } else {
-        responseText = `Yes! Our *${matchedItem.name}* 🥞 is available for *₹${matchedItem.price}* (${matchedItem.description}). Would you like to order?`;
-      }
-    } else if (lowerMsg.includes("biscoff")) {
-      const biscoffItem = toolData.find(item => item.name.includes("Biscoff"));
-      if (biscoffItem && biscoffItem.is_available === 0) {
-        responseText = "I'm sorry, but our signature *Lotus Biscoff Pancakes* 🥞 are currently sold out today! Would you like to try our *Purely Nutella Pancakes* or *Blueberry Garden Pancakes* instead?";
-      } else {
-        responseText = "We have our signature *Lotus Biscoff Pancakes* 🥞 for *₹299*. They are drizzled with imported Lotus Biscoff spread and served with whipped cream and chocolate sauce! Highly recommended! Would you like to order?";
-      }
-    } else if (lowerMsg.includes("chocolate")) {
-      const dbChoc = toolData.filter(item => (item.name.toLowerCase().includes("chocolate") || item.name.toLowerCase().includes("nutella") || item.name.toLowerCase().includes("cocoa") || item.name.toLowerCase().includes("mousse") || item.name.toLowerCase().includes("lava")) && item.is_available !== 0);
-      if (dbChoc.length === 0) {
-        responseText = "I'm sorry, but all of our chocolate items are currently sold out today! 🍫 Can I recommend trying our *Classic Pancakes* or some *Fresh Fruit Pancakes* instead?";
-      } else {
-        responseText = "We have several chocolate pancake options available! 🍫\n" +
-          dbChoc.slice(0, 4).map(item => `- *${item.name}*: ₹${item.price}`).join("\n") +
-          "\n\nWhich one would you like to try?";
-      }
+    // Check for dietary/allergen queries first
+    if (lowerMsg.includes("gluten") || lowerMsg.includes("celiac")) {
+      responseText = "🌾 **Gluten-Free Information:**\nAll of our pancakes, crepes, and sandwiches contain wheat flour (gluten). However, some of our **Omelettes** and **Drink options** are naturally gluten-free.\n\n⚠️ *Warning:* Since our kitchen handles a lot of flour, cross-contamination is possible. If you have a severe allergy, please call us directly at **+91 98765-43210** so our staff can take special precautions!";
+    } else if (lowerMsg.includes("diabetic") || lowerMsg.includes("sugar") || lowerMsg.includes("diabetes")) {
+      responseText = "🍬 **Diabetic & Sugar-Free Queries:**\nOur pancake stacks and sweet crepes contain high sugar and carbs. We recommend trying our savory options like **Omelettes**, **Sandwiches**, or **Savory Crepes**.\n\nPlease call us at **+91 98765-43210** to confirm if we can customize your order with sugar-free syrup or sweeteners!";
+    } else if (lowerMsg.includes("eggless") || lowerMsg.includes("vegetarian") || lowerMsg.includes("pure veg") || lowerMsg.includes("egg free")) {
+      responseText = "🥞 **Eggless & Vegetarian Options:**\nAll of our sweet pancakes and crepes can be prepared **100% eggless/vegetarian** on request! 😊\n\n*(Note: Savory omelettes and non-veg platters contain egg or chicken as listed in their descriptions).*";
     } else {
-      // General menu list, but only show available items!
-      const availableItems = toolData.filter(item => item.is_available !== 0);
-      responseText = "Here is the menu for *Uncle Peter's Pancakes* in Ludhiana: 🥞✨\n\n" +
-        availableItems.map(item => `- *${item.name}*: ₹${item.price} (${item.description})`).join("\n\n") +
-        "\n\nWould you like to try our fluffy pancakes or some savory snacks?";
+      // Check if the user is asking for a specific item name using exact word matching
+      const matchedItems = findFuzzyMatchedItems(lowerMsg, toolData);
+      const matchedItem = matchedItems.length > 0 ? matchedItems[0] : null;
+
+      if (matchedItem) {
+        if (matchedItem.is_available === 0) {
+          responseText = `I'm sorry, but our *${matchedItem.name}* 🥞 is currently out of stock today! Can I recommend trying a similar alternative from our **${matchedItem.category}** selection?`;
+        } else {
+          responseText = `Yes! Our *${matchedItem.name}* 🥞 is available for *₹${matchedItem.price}* (${matchedItem.description}). Would you like to order?`;
+        }
+      } else if (lowerMsg.includes("biscoff")) {
+        const biscoffItem = toolData.find(item => item.name.includes("Biscoff"));
+        if (biscoffItem && biscoffItem.is_available === 0) {
+          responseText = "I'm sorry, but our signature *Lotus Biscoff Pancakes* 🥞 are currently sold out today! Would you like to try our *Purely Nutella Pancakes* or *Blueberry Garden Pancakes* instead?";
+        } else {
+          responseText = "We have our signature *Lotus Biscoff Pancakes* 🥞 for *₹299*. They are drizzled with imported Lotus Biscoff spread and served with whipped cream and chocolate sauce! Highly recommended! Would you like to order?";
+        }
+      } else if (lowerMsg.includes("chocolate")) {
+        const dbChoc = toolData.filter(item => (item.name.toLowerCase().includes("chocolate") || item.name.toLowerCase().includes("nutella") || item.name.toLowerCase().includes("cocoa") || item.name.toLowerCase().includes("mousse") || item.name.toLowerCase().includes("lava")) && item.is_available !== 0);
+        if (dbChoc.length === 0) {
+          responseText = "I'm sorry, but all of our chocolate items are currently sold out today! 🍫 Can I recommend trying our *Classic Pancakes* or some *Fresh Fruit Pancakes* instead?";
+        } else {
+          responseText = "We have several chocolate pancake options available! 🍫\n" +
+            dbChoc.slice(0, 4).map(item => `- *${item.name}*: ₹${item.price}`).join("\n") +
+            "\n\nWhich one would you like to try?";
+        }
+      } else {
+        // General menu list, but only show available items!
+        const availableItems = toolData.filter(item => item.is_available !== 0);
+        responseText = "Here is the menu for *Uncle Peter's Pancakes* in Ludhiana: 🥞✨\n\n" +
+          availableItems.map(item => `- *${item.name}*: ₹${item.price} (${item.description})`).join("\n\n") +
+          "\n\nWould you like to try our fluffy pancakes or some savory snacks?";
+      }
     }
   } else if (triggerTiming) {
     toolCalled = "getOpeningHours";
@@ -790,7 +800,7 @@ app.post('/api/chat', async (req, res) => {
         steps.push(`Initiating Gemini content generation...`);
 
         const model = genAI.getGenerativeModel({
-          model: 'gemini-2.5-flash',
+          model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
           systemInstruction: systemInstructionText,
           tools: geminiTools
         });
@@ -916,7 +926,7 @@ Please generate a concise summary of this conversation. You must structure your 
           stepLogs.push(`[Simulator] Generated rolling summary successfully.`);
         } else {
           const summarizerModel = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
+            model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
             systemInstruction: 'You are a helpful assistant that summarizes shop conversations. Always structure your output in this exact format:\n[USER PROFILE]: (Include customer name, preferences, allergies, or "None")\n[PERMANENT TRANSACTIONS]: (Include ordered items or "None")\n[CURRENT CONTEXT]: (Include active conversation status, or "None")'
           });
           const summaryResult = await summarizerModel.generateContent({

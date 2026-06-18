@@ -101,7 +101,19 @@ function formatWhatsAppText(text) {
 // Load session history on page load
 async function loadSession() {
   try {
-    const response = await fetch('/api/session');
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    const convId = urlParams.get('convId');
+    
+    let fetchUrl = '/api/session';
+    const params = [];
+    if (userId) params.push(`userId=${userId}`);
+    if (convId) params.push(`convId=${convId}`);
+    if (params.length > 0) {
+      fetchUrl += '?' + params.join('&');
+    }
+
+    const response = await fetch(fetchUrl);
     if (!response.ok) throw new Error('Failed to retrieve session');
 
     const data = await response.json();
