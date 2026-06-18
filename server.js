@@ -475,7 +475,12 @@ async function runSimulator(userMessage, history, currentSummary) {
   steps.push(`[Simulator] Active Session validated. Analyzing user query intent...`);
 
   // Detect triggers for getMenu & order placement
-  const menuKeywords = ['menu', 'pancake', 'price', 'cost', 'rate', 'eat', 'dish', 'food', 'sweet', 'chocolate', 'biscoff', 'beverage', 'drink'];
+  const menuKeywords = [
+    'menu', 'pancake', 'pancakes', 'price', 'cost', 'rate', 'eat', 'dish', 'food', 'sweet', 'chocolate', 
+    'biscoff', 'beverage', 'drink', 'serve', 'serving', 'serves', 'have', 'has', 'fries', 'side', 'sides', 
+    'crepe', 'crepes', 'coffee', 'tea', 'soda', 'mojito', 'shake', 'shakes', 'sandwich', 'sandwiches', 
+    'omelette', 'omelettes', 'french', 'toast', 'toasts', 'get', 'list', 'show'
+  ];
   const timingKeywords = ['time', 'open', 'close', 'hour', 'schedule', 'address', 'location', 'where', 'phone', 'call', 'contact', 'ludhiana', 'map'];
   const orderKeywords = ['order', 'buy', 'purchase', 'pay', 'checkout', 'bill', 'total', 'cost of my order'];
 
